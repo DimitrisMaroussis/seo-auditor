@@ -2,6 +2,16 @@
 
 A sitemap-driven technical SEO auditor, available as a CLI and as a Windows desktop app (Electron + React dashboard).
 
+## Screenshots
+
+**Site audit:** every page from the sitemap checked, with issues grouped and explained.
+
+![Site audit](docs/site-audit.png)
+
+**Core Web Vitals:** real-visitor speed data from Google, with what each metric means and why it matters.
+
+![Core Web Vitals](docs/core-web-vitals.png)
+
 ## Features
 
 - Crawls every page listed in a site's sitemap
