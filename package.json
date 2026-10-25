@@ -1,0 +1,55 @@
+{
+  "name": "magenta-seo-auditor",
+  "productName": "SEO Auditor",
+  "version": "1.0.0",
+  "description": "Sitemap-driven technical SEO auditor",
+  "author": "Dimitris Maroussis",
+  "main": "desktop/main.js",
+  "type": "commonjs",
+  "bin": {
+    "seo-audit": "index.js"
+  },
+  "scripts": {
+    "dev": "npm --prefix dashboard run dev",
+    "start": "node index.js",
+    "test": "node --test \"test/*.test.js\"",
+    "build:dashboard": "npm --prefix dashboard run build",
+    "desktop": "npm run build:dashboard && node desktop/run.js",
+    "desktop:dist": "npm run build:dashboard && electron-builder --win"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "cheerio": "1.2.0",
+    "fast-xml-parser": "5.11.2"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "gr.magentainsurance.seo-auditor",
+    "productName": "SEO Auditor",
+    "directories": { "output": "release" },
+    "files": [
+      "desktop/**",
+      "src/**",
+      "dashboard/dist/**",
+      "package.json",
+      "!**/.google-api-key",
+      "!reports/**",
+      "!test/**"
+    ],
+    "win": { "target": "nsis" },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "SEO Auditor"
+    }
+  }
+}

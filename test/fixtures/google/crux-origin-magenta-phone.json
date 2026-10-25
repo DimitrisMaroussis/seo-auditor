@@ -1,0 +1,251 @@
+{
+ "status": 200,
+ "body": {
+  "record": {
+   "key": {
+    "formFactor": "PHONE",
+    "origin": "https://www.magentainsurance.gr"
+   },
+   "metrics": {
+    "largest_contentful_paint_resource_type": {
+     "fractions": {
+      "text": 0.8211,
+      "image": 0.1789
+     }
+    },
+    "experimental_largest_contentful_paint_with_softnavs": {
+     "histogram": [
+      {
+       "start": 0,
+       "end": 2500,
+       "density": 0.6705
+      },
+      {
+       "start": 2500,
+       "end": 4000,
+       "density": 0.1441
+      },
+      {
+       "start": 4000,
+       "density": 0.1854
+      }
+     ],
+     "percentiles": {
+      "p75": 3237
+     }
+    },
+    "first_contentful_paint": {
+     "histogram": [
+      {
+       "start": 0,
+       "end": 1800,
+       "density": 0.4907
+      },
+      {
+       "start": 1800,
+       "end": 3000,
+       "density": 0.2792
+      },
+      {
+       "start": 3000,
+       "density": 0.2301
+      }
+     ],
+     "percentiles": {
+      "p75": 2869
+     }
+    },
+    "interaction_to_next_paint": {
+     "histogram": [
+      {
+       "start": 0,
+       "end": 200,
+       "density": 0.4697
+      },
+      {
+       "start": 200,
+       "end": 500,
+       "density": 0.3912
+      },
+      {
+       "start": 500,
+       "density": 0.1392
+      }
+     ],
+     "percentiles": {
+      "p75": 358
+     }
+    },
+    "largest_contentful_paint_image_resource_load_delay": {
+     "percentiles": {
+      "p75": 302
+     }
+    },
+    "cumulative_layout_shift": {
+     "histogram": [
+      {
+       "start": "0.00",
+       "end": "0.10",
+       "density": 0.6771
+      },
+      {
+       "start": "0.10",
+       "end": "0.25",
+       "density": 0.0567
+      },
+      {
+       "start": "0.25",
+       "density": 0.2661
+      }
+     ],
+     "percentiles": {
+      "p75": "0.52"
+     }
+    },
+    "experimental_interaction_to_next_paint_with_softnavs": {
+     "histogram": [
+      {
+       "start": 0,
+       "end": 200,
+       "density": 0.4675
+      },
+      {
+       "start": 200,
+       "end": 500,
+       "density": 0.3866
+      },
+      {
+       "start": 500,
+       "density": 0.1459
+      }
+     ],
+     "percentiles": {
+      "p75": 373
+     }
+    },
+    "largest_contentful_paint": {
+     "histogram": [
+      {
+       "start": 0,
+       "end": 2500,
+       "density": 0.6239
+      },
+      {
+       "start": 2500,
+       "end": 4000,
+       "density": 0.209
+      },
+      {
+       "start": 4000,
+       "density": 0.1671
+      }
+     ],
+     "percentiles": {
+      "p75": 3250
+     }
+    },
+    "largest_contentful_paint_image_element_render_delay": {
+     "percentiles": {
+      "p75": 547
+     }
+    },
+    "round_trip_time": {
+     "histogram": [
+      {
+       "start": 0,
+       "end": 75,
+       "density": 0.2343
+      },
+      {
+       "start": 75,
+       "end": 275,
+       "density": 0.7185
+      },
+      {
+       "start": 275,
+       "density": 0.0472
+      }
+     ],
+     "percentiles": {
+      "p75": 141
+     }
+    },
+    "navigation_types": {
+     "fractions": {
+      "restore": 0,
+      "back_forward": 0.029,
+      "back_forward_cache": 0.0466,
+      "prerender": 0,
+      "navigate": 0.8128,
+      "navigate_cache": 0.0181,
+      "reload": 0.0935
+     }
+    },
+    "experimental_cumulative_layout_shift_with_softnavs": {
+     "histogram": [
+      {
+       "start": "0.00",
+       "end": "0.10",
+       "density": 0.7629
+      },
+      {
+       "start": "0.10",
+       "end": "0.25",
+       "density": 0.0428
+      },
+      {
+       "start": "0.25",
+       "density": 0.1942
+      }
+     ],
+     "percentiles": {
+      "p75": "0.08"
+     }
+    },
+    "experimental_time_to_first_byte": {
+     "histogram": [
+      {
+       "start": 0,
+       "end": 800,
+       "density": 0.6931
+      },
+      {
+       "start": 800,
+       "end": 1800,
+       "density": 0.2391
+      },
+      {
+       "start": 1800,
+       "density": 0.0678
+      }
+     ],
+     "percentiles": {
+      "p75": 908
+     }
+    },
+    "largest_contentful_paint_image_resource_load_duration": {
+     "percentiles": {
+      "p75": 424
+     }
+    },
+    "largest_contentful_paint_image_time_to_first_byte": {
+     "percentiles": {
+      "p75": 769
+     }
+    }
+   },
+   "collectionPeriod": {
+    "firstDate": {
+     "year": 2026,
+     "month": 9,
+     "day": 19
+    },
+    "lastDate": {
+     "year": 2026,
+     "month": 10,
+     "day": 16
+    }
+   }
+  }
+ }
+}

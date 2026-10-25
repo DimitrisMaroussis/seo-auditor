@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; }
+
+/* Anchor jumps stop below the sticky top bar. */
+html { scroll-padding-top: 5rem; }
+
+/*
+ * Display type: Commissioner's flare and volume axes turn headings into the
+ * page's voice. Body text keeps the plain cut (FLAR 0, VOLM 0).
+ */
+.font-display {
+  font-variation-settings: "FLAR" 100, "VOLM" 60;
+  letter-spacing: -0.02em;
+}
+.font-display-soft { font-variation-settings: "FLAR" 60, "VOLM" 20; }
+h1, h2, h3 { text-wrap: balance; }
+
+:focus-visible { outline-color: #e20074; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* Chart tokens (validated with the dataviz palette checker for both themes). */
+:root {
+  --series-mobile: #e20074;
+  --series-desktop: #2563eb;
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-poor: #d03b3b;
+  --chart-grid: #e6dde2;
+  --chart-text: #7d6874;
+  --chart-surface: #ffffff;
+}
+:root.dark {
+  --series-mobile: #f5479b;
+  --series-desktop: #3b82f6;
+  --chart-grid: #2f222a;
+  --chart-text: #a8949f;
+  --chart-surface: #22171e;
+}
+
+/* Site strip: a page's worst severity. Matches the severity pills (Tailwind red/amber/sky/emerald). */
+:root {
+  --sev-error: #dc2626;
+  --sev-warning: #f59e0b;
+  --sev-info: #0ea5e9;
+  --sev-clean: #10b981;
+  --sev-failed: #a8949f;
+}
+:root.dark {
+  --sev-error: #f87171;
+  --sev-warning: #fbbf24;
+  --sev-info: #38bdf8;
+  --sev-clean: #34d399;
+  --sev-failed: #7d6874;
+}
+
+/* Strip tones: problems stay saturated, calm pages recede, so the eye lands on what needs work. */
+:root {
+  --strip-error: var(--sev-error);
+  --strip-warning: var(--sev-warning);
+  --strip-info: #9fd4ef;
+  --strip-clean: #b5e3cc;
+  --strip-failed: var(--sev-failed);
+}
+:root.dark {
+  --strip-info: #1f5a78;
+  --strip-clean: #1d5c45;
+}
+
+/* The page's one orchestrated moment: the strip fills in, worst pages first. */
+/* Animates `scale`, not `transform`, so the hover lift (a translate) still applies after it ends. */
+@keyframes strip-in { from { scale: 1 0; opacity: 0; } to { scale: 1 1; opacity: 1; } }
+.strip-in { transform-origin: bottom; animation: strip-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+/* Drawer and overlay entrance (disabled by the reduced-motion rule above). */
+@keyframes drawer-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.drawer-in { animation: drawer-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.fade-in { animation: fade-in 0.2s ease-out; }
