@@ -2,6 +2,12 @@
 
 A sitemap-driven technical SEO auditor, available as a CLI and as a Windows desktop app (Electron + React dashboard).
 
+## Download
+
+**[Download SEO Auditor for Windows](https://github.com/DimitrisMaroussis/seo-auditor/releases/latest)**: get `SEO Auditor Setup 1.0.0.exe` from the latest release and run it.
+
+The installer is not code-signed, so Windows may show "Windows protected your PC". Click **More info**, then **Run anyway**.
+
 ## Screenshots
 
 **Site audit:** every page from the sitemap checked, with issues grouped and explained.
