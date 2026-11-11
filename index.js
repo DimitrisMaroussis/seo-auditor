@@ -20,6 +20,9 @@ Options:
   --host <hostname>       extra hostname in scope (repeatable)
   --no-follow-root-redirect  do not add the host the root redirects to
   --user-agent <ua>       User-Agent header (e.g. one allowlisted in your WAF)
+  --header "<Name: value>"  extra header sent only to the audited site (a WAF allowlist token)
+  --crawl                 also follow internal links from the home page: finds
+                          orphan pages, pages missing from the sitemap, click depth
   --no-link-check         skip checking internal links for 4xx/5xx
   --no-external-check     skip checking external links and email-link domains
   --no-image-check        skip checking that images load
@@ -53,6 +56,13 @@ function parseArgs(argv) {
             case "--host": (args.options.scopeHosts ||= []).push(String(argv[++i]).toLowerCase()); break;
             case "--no-follow-root-redirect": args.options.followRootRedirect = false; break;
             case "--user-agent": args.options.userAgent = argv[++i]; break;
+            case "--header": {
+                const match = /^([^:\s]+)\s*:\s*(.+)$/.exec(String(argv[++i] ?? ""));
+                if (!match) throw new Error('--header expects "Name: value"');
+                args.options.siteHeaders = { headers: { [match[1]]: match[2].trim() } };
+                break;
+            }
+            case "--crawl": args.options.crawl = true; break;
             case "-h": case "--help": args.help = true; break;
             default:
                 if (arg.startsWith("--")) throw new Error(`Unknown option ${arg}`);

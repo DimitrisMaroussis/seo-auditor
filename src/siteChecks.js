@@ -65,7 +65,8 @@ const brief = (items) => items.slice(0, 3).join("; ") + (items.length > 3 ? "; â
  */
 async function runSiteChecks(pages, ctx = {}) {
     const cfg = mergeConfig(ctx);
-    const byUrl = indexPages(pages);
+    // Pages the crawl fetched but did not keep (error pages, files) answer link checks too.
+    const byUrl = indexPages([...pages, ...(ctx.knownPages || [])]);
     // Several sitemap URLs can redirect to the same document; count each
     // final document once so it is not reported as a duplicate of itself.
     const seenFinal = new Set();

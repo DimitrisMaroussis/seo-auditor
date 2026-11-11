@@ -84,6 +84,8 @@ test("verdict: refused automated checks are unverified, not broken", () => {
     assert.equal(verdict({ status: 404 }).state, "broken");
     assert.equal(verdict({ status: 500 }).state, "broken");
     assert.equal(verdict({ status: null, error: { code: "ENOTFOUND" } }).reason, "ENOTFOUND");
+    assert.equal(verdict({ status: null, error: { code: "ETIMEDOUT" } }).state, "unverified");
+    assert.equal(verdict({ status: null, error: { code: "ETIMEDOUT" } }, { image: true }).state, "broken");
     assert.equal(verdict({ status: 200 }).state, "ok");
     assert.equal(verdict({ status: 200, contentType: "text/html" }, { image: true }).state, "broken");
     assert.equal(verdict({ status: 200, contentType: "image/webp" }, { image: true }).state, "ok");

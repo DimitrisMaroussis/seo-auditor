@@ -25,6 +25,12 @@ const DEFAULTS = Object.freeze({
     // Add hosts that the root URL or /robots.txt redirect to into scopeHosts.
     followRootRedirect: true,
     userAgent: "MagentaSEOAuditor/1.0 (+https://github.com/)",
+    // Extra request headers sent only to the audited site's own hosts, e.g. a
+    // token the site's WAF allowlists: { headers: { name: value }, isSiteHost(hostname) }.
+    siteHeaders: null,
+    // Also follow internal links from the root page (site audits), to find
+    // pages missing from the sitemap, orphan pages and click depth.
+    crawl: false,
     // Extra TLS options for https requests (e.g. { ca } in tests).
     tls: {}
 });

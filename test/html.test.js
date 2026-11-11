@@ -179,3 +179,19 @@ test("JSON-LD blocks are extracted raw, with type attribute variations", () => {
     assert.equal(seo.jsonLdBlocks.length, 2);
     assert.deepEqual(JSON.parse(seo.jsonLdBlocks[0]), { "@type": "Thing", name: "a < b && c" });
 });
+
+test("link and image elements are recorded as written, one per element", () => {
+    const seo = extractSeo(doc("",
+        `<a href="/a" class="btn">Go <b>home</b></a><a href="/a">Again</a>` +
+        `<a href="mailto:x@example.gr">Mail</a><a href="">Empty</a>` +
+        `<img src="/i.png" alt="Logo" loading="lazy"><img src="/j.png">`
+    ), PAGE, opts);
+    assert.deepEqual(seo.links.all.map(a => [a.kind, a.href, a.html]), [
+        ["internal", "/a", `<a href="/a" class="btn">Go home</a>`],
+        ["internal", "/a", `<a href="/a">Again</a>`],
+        ["other", "mailto:x@example.gr", `<a href="mailto:x@example.gr">Mail</a>`],
+        ["invalid", "", `<a href="">Empty</a>`]
+    ]);
+    assert.equal(seo.links.all[0].url, "https://www.example.gr/a");
+    assert.deepEqual(seo.images.all.map(i => i.html), [`<img src="/i.png" alt="Logo" loading="lazy">`, `<img src="/j.png">`]);
+});

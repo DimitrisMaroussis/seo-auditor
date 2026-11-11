@@ -139,9 +139,14 @@ async function checkUrl(url, cfg, { accept } = {}) {
 /**
  * Sort a check result: "ok", "broken" (with a reason) or "unverified" (the
  * server refused automated checks, so the link may well work for people).
+ * A link that never replied is unverified too: firewalls often drop bot
+ * requests silently instead of refusing them.
  */
 function verdict(r, { image = false } = {}) {
-    if (r.error && !r.status) return { state: "broken", reason: r.error.code || r.error.message };
+    if (r.error && !r.status) {
+        if (!image && r.error.code === "ETIMEDOUT") return { state: "unverified", reason: "ETIMEDOUT" };
+        return { state: "broken", reason: r.error.code || r.error.message };
+    }
     if (UNVERIFIABLE.has(r.status)) return { state: "unverified", reason: `HTTP ${r.status}` };
     if (r.status >= 400) return { state: "broken", reason: `HTTP ${r.status}` };
     if (image && r.contentType && !/^image\//i.test(r.contentType)) {

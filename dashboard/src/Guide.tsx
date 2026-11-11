@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Severity } from "./types";
 import { issueLabels, useI18n, type Lang } from "./i18n";
 import { useActiveSection, scrollNavToActive } from "./useActiveSection";
@@ -6,6 +6,8 @@ import { type GuideSection } from "./guide/shared";
 import { GUIDE_EN } from "./guide/en";
 import { GUIDE_EL } from "./guide/el";
 import { CHECKS_EN } from "./checks/en";
+import { clearReturnPoint, peekReturnPoint } from "./returnPoint";
+import { Icon } from "./ui";
 
 /*
  * "Checks guide" — plain-language explanation of every check, for people who
@@ -171,6 +173,29 @@ function Section({ section, ui, lang }: { section: GuideSection; ui: typeof UI.e
   );
 }
 
+/** Floating way back to the page drawer the reader left through "What is this?". */
+function ReturnBar() {
+  const { t } = useI18n();
+  const [point, setPoint] = useState(peekReturnPoint);
+  if (!point) return null;
+  return (
+    <div className="fixed inset-x-0 bottom-5 z-30 flex justify-center px-4">
+      <div className="flex max-w-full items-center gap-1 rounded-full bg-slate-900 py-1 pl-1 pr-1.5 text-sm text-white shadow-xl ring-1 ring-black/10 dark:bg-slate-700">
+        {/* Clearing the hash shows the results view, which reopens the drawer from the return point. */}
+        <a href="#" onClick={e => { e.preventDefault(); window.location.hash = ""; }}
+          className="inline-flex min-w-0 items-center gap-2 rounded-full px-3 py-1.5 font-medium !text-white !no-underline hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
+          <Icon name="chevron" className="h-4 w-4 rotate-180" />
+          <span className="truncate">{t.returnBar.back(point.path)}</span>
+        </a>
+        <button type="button" onClick={() => { clearReturnPoint(); setPoint(null); }} aria-label={t.returnBar.dismiss} title={t.returnBar.dismiss}
+          className="rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
+          <Icon name="x" className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Guide() {
   const { lang } = useI18n();
   const sections = CONTENT[lang];
@@ -192,7 +217,8 @@ export default function Guide() {
   );
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)]">
+    <div className="grid gap-8 pb-16 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <ReturnBar />
       <nav ref={navRef} aria-label={ui.nav} className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
         <ul className="space-y-0.5 text-sm">
           {navLink("intro", ui.intro)}

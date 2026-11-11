@@ -16,7 +16,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  * With `headersOnly`, resolves as soon as the headers arrive and drops the
  * body (link and image checks need the status, not the content).
  */
-function requestOnce(url, { method, timeoutMs, maxBodyBytes, userAgent, tls, headersOnly = false, accept }) {
+function requestOnce(url, { method, timeoutMs, maxBodyBytes, userAgent, tls, headersOnly = false, accept, extraHeaders }) {
     return new Promise((resolve, reject) => {
         let parsed;
         try {
@@ -43,7 +43,8 @@ function requestOnce(url, { method, timeoutMs, maxBodyBytes, userAgent, tls, hea
             headers: {
                 "User-Agent": userAgent,
                 "Accept": accept || "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "Accept-Encoding": "identity"
+                "Accept-Encoding": "identity",
+                ...extraHeaders
             },
             ...(parsed.protocol === "https:" ? tls : {})
         };
@@ -99,6 +100,20 @@ function requestOnce(url, { method, timeoutMs, maxBodyBytes, userAgent, tls, hea
         req.on("error", (err) => finish(reject, err));
         req.end();
     });
+}
+
+/**
+ * Headers that only the audited site may see (e.g. a WAF allowlist token).
+ * Checked on every hop, so a redirect to another site never carries them.
+ */
+function siteHeadersFor(url, cfg) {
+    const { siteHeaders } = cfg;
+    if (!siteHeaders || !siteHeaders.headers) return undefined;
+    try {
+        return siteHeaders.isSiteHost(new URL(url).hostname) ? siteHeaders.headers : undefined;
+    } catch {
+        return undefined;
+    }
 }
 
 function decodeBody(buffer, contentType) {
@@ -158,7 +173,7 @@ async function fetchUrl(url, options = {}) {
         for (let attempt = 0; attempt <= cfg.retries; attempt++) {
             attempts++;
             try {
-                response = await requestOnce(current, { ...cfg, method });
+                response = await requestOnce(current, { ...cfg, method, extraHeaders: siteHeadersFor(current, cfg) });
                 lastError = null;
                 if (RETRYABLE_STATUSES.has(response.status) && attempt < cfg.retries) {
                     await sleep(cfg.retryDelayMs * 2 ** attempt);

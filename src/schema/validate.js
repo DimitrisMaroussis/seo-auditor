@@ -122,7 +122,7 @@ function validateStructuredData(rawBlocks) {
         if (!text) {
             result.jsonSyntax.invalid++;
             result.jsonSyntax.errors.push({ block: index, error: "Empty JSON-LD script" });
-            result.blocks.push({ index, validJson: false, error: "Empty JSON-LD script" });
+            result.blocks.push({ index, validJson: false, error: "Empty JSON-LD script", raw: text });
             return;
         }
 
@@ -132,7 +132,7 @@ function validateStructuredData(rawBlocks) {
         } catch (err) {
             result.jsonSyntax.invalid++;
             result.jsonSyntax.errors.push({ block: index, error: err.message });
-            result.blocks.push({ index, validJson: false, error: err.message });
+            result.blocks.push({ index, validJson: false, error: err.message, raw: text });
             return;
         }
         result.jsonSyntax.valid++;
@@ -163,7 +163,8 @@ function validateStructuredData(rawBlocks) {
             index,
             validJson: true,
             types: [...new Set(entities.flatMap(e => e.types))],
-            data: parsed
+            data: parsed,
+            raw: text
         });
     });
 

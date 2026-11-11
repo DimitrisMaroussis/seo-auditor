@@ -97,6 +97,10 @@ async function auditPage(url, ctx = {}) {
 
     const res = await fetchUrl(url, cfg);
     page.finalUrl = res.finalUrl;
+    // A link to /a that redirects to /a/ is the sitemap's /a/ page.
+    if (ctx.sitemapUrls && !page.inSitemap && res.finalUrl) {
+        page.inSitemap = ctx.sitemapUrls.has(normalizeUrl(res.finalUrl));
+    }
     page.status = res.status;
     page.redirectChain = res.redirectChain;
     page.responseTimeMs = res.responseTimeMs;
@@ -128,7 +132,8 @@ async function auditPage(url, ctx = {}) {
         page.blocked = challenge;
         issue("error", "BLOCKED_BY_BOT_PROTECTION",
             `${challenge.vendor} served a challenge page instead of the document; on-page SEO was not audited. ` +
-            "Allowlist the auditor's IP or User-Agent (--user-agent) in the WAF and re-run.");
+            "Allowlist the auditor in the WAF (by IP, User-Agent or a secret header — set them under Advanced in the audit form, " +
+            "or --user-agent / --header on the command line) and re-run.");
         return page;
     }
     if (res.status >= 400) {

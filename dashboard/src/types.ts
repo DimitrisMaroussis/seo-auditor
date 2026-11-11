@@ -40,8 +40,16 @@ export interface PageResult {
   canonical: { url: string | null; count: number };
   metaRobots: { name: string; content: string }[];
   h1: { count: number; texts: string[] };
-  images: { count: number; missingAlt: { src: string | null }[]; emptyAlt: number; urls?: string[] };
-  links: { internal: string[]; external: string[] };
+  images: {
+    count: number; missingAlt: { src: string | null }[]; emptyAlt: number; urls?: string[];
+    /** Every <img> element; absent in older saved reports. */
+    all?: { index: number; src: string | null; alt: string | null; altStatus: "missing" | "empty" | "present"; html?: string }[];
+  };
+  links: {
+    internal: string[]; external: string[];
+    /** Every <a href> element as written; absent in older saved reports. */
+    all?: { index: number; kind: "internal" | "external" | "other" | "invalid"; href: string; url: string | null; html: string }[];
+  };
   /** Email, phone, javascript: and unreadable links on the page; absent in older saved reports. */
   otherLinks?: {
     invalidEmail: { href: string; reason: string }[];
@@ -52,10 +60,16 @@ export interface PageResult {
   structuredData: {
     blockCount: number;
     types: string[];
+    /** One entry per JSON-LD script; `raw` is the script text as published (absent in older saved reports). */
+    blocks?: { index: number; validJson: boolean; types?: string[]; data?: unknown; error?: string; raw?: string }[];
     jsonSyntax: { invalid: number };
     google: { features: GoogleFeature[] };
   } | null;
   inSitemap: boolean | null;
+  /** Clicks from the home page when the audit crawled links; null = not reached; absent = no crawl. */
+  crawlDepth?: number | null;
+  /** Audited pages that link here (crawl audits only). */
+  inlinks?: number;
   indexability: { indexable: boolean; reasons: string[]; canonicalStatus: string } | null;
   analyzed: boolean;
   issues: Issue[];
@@ -77,6 +91,19 @@ export interface SiteChecks {
   invalidEmailDomains?: { domain: string; sources: string[] }[];
   brokenImages?: LinkFinding[];
   unverifiedImages?: LinkFinding[];
+  /** Sitemap URLs robots.txt disallows (absent in older reports). */
+  sitemapRobotsBlocked?: string[];
+  /** Present when the audit followed links from the home page. */
+  crawl?: {
+    startUrl: string;
+    /** False when the page limit stopped the crawl: orphan pages are then not identified. */
+    complete: boolean;
+    pagesReached: number;
+    orphans: string[];
+    notInSitemap: string[];
+    deep: { url: string; depth: number }[];
+    robotsBlocked: { url: string; sources: string[] }[];
+  };
   linkCheck: {
     checked: number; skipped: boolean;
     externalChecked?: number; externalSkipped?: boolean; emailDomainsChecked?: number;
@@ -180,7 +207,7 @@ export interface VitalsReport {
 
 // Events streamed by POST /api/audit (one JSON object per line).
 export type AuditEvent =
-  | { type: "phase"; phase: "sitemap" | "pages" | "siteChecks"; total?: number }
+  | { type: "phase"; phase: "sitemap" | "crawl" | "pages" | "siteChecks"; total?: number }
   | { type: "progress"; done: number; total: number; url: string; status: number | string | null }
   | { type: "done"; file: string }
   | { type: "error"; message: string };

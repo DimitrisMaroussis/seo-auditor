@@ -268,3 +268,18 @@ test("clearing reports also removes saved vitals reports", async () => {
     assert.equal(res.status, 200);
     assert.equal(vitalsFiles().length, 0);
 });
+
+test("parseAuditRequest: crawl, User-Agent and allowlist header", () => {
+    const base = { url: "https://ex.gr/" };
+    const ok = parseAuditRequest({ ...base, crawl: true, userAgent: " MyAuditor/2 ", siteHeader: { name: "X-Audit-Token", value: "abc" } });
+    assert.equal(ok.options.crawl, true);
+    assert.equal(ok.options.userAgent, "MyAuditor/2");
+    assert.deepEqual(ok.options.siteHeaders, { headers: { "X-Audit-Token": "abc" } });
+    assert.equal(parseAuditRequest({ ...base, mode: "page", crawl: true }).options.crawl, undefined, "a single page is not crawled");
+
+    assert.throws(() => parseAuditRequest({ ...base, userAgent: "bad\r\nX-Injected: 1" }), /User-Agent/);
+    assert.throws(() => parseAuditRequest({ ...base, siteHeader: { name: "Bad Name", value: "x" } }), /header name/);
+    assert.throws(() => parseAuditRequest({ ...base, siteHeader: { name: "Host", value: "x" } }), /cannot be replaced/);
+    assert.throws(() => parseAuditRequest({ ...base, siteHeader: { name: "X-Token", value: "a\nb" } }), /header value/);
+    assert.throws(() => parseAuditRequest({ ...base, siteHeader: { name: "X-Token", value: "" } }), /header value/);
+});

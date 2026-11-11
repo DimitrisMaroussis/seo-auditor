@@ -107,6 +107,15 @@ function extractSeo(html, pageUrl, { rootUrl = pageUrl, subdomainPolicy = "exact
     // ---------- H1 ----------
     const h1s = $("h1").map((_, el) => collapse($(el).text())).get();
 
+    // Markup of an element as written, for showing it in the report: the start tag with
+    // its attributes and, for links, the visible text. Long values are shortened.
+    const clip = (text, max) => text.length > max ? text.slice(0, max - 1) + "…" : text;
+    const startTag = (el) => {
+        const attrs = Object.entries(el.attribs || {})
+            .map(([name, value]) => ` ${name}="${clip(value, 300).replace(/"/g, "&quot;")}"`);
+        return `<${el.name}${attrs.join("")}>`;
+    };
+
     // ---------- IMAGES ----------
     const images = [];
     const imageUrls = new Set();   // every file the page can load as an image, resolved
@@ -124,7 +133,8 @@ function extractSeo(html, pageUrl, { rootUrl = pageUrl, subdomainPolicy = "exact
             index: index + 1,
             src: $(el).attr("src") || $(el).attr("data-src") || null,
             alt: alt === undefined ? null : alt,
-            altStatus: alt === undefined ? "missing" : (alt.trim() === "" ? "empty" : "present")
+            altStatus: alt === undefined ? "missing" : (alt.trim() === "" ? "empty" : "present"),
+            html: startTag(el)
         });
         addImage($(el).attr("src"));
         addImage($(el).attr("data-src"));
@@ -142,10 +152,16 @@ function extractSeo(html, pageUrl, { rootUrl = pageUrl, subdomainPolicy = "exact
     const other = [];
     const invalid = [];
     const nofollow = new Set();
+    const linkElements = [];
 
-    $("a[href]").each((_, el) => {
+    $("a[href]").each((index, el) => {
         const href = $(el).attr("href");
         const link = classifyLink(href, baseUrl, rootUrl, subdomainPolicy, extraHosts);
+        const text = clip(collapse($(el).text()), 120);
+        linkElements.push({
+            index: index + 1, kind: link.kind, href: link.raw, url: link.url,
+            html: `${startTag(el)}${text}</a>`
+        });
         if (link.kind === "internal") internal.add(link.url);
         else if (link.kind === "external") external.add(link.url);
         else if (link.kind === "other") other.push(link.raw);
@@ -188,7 +204,8 @@ function extractSeo(html, pageUrl, { rootUrl = pageUrl, subdomainPolicy = "exact
             external: [...external],
             other,
             invalid,
-            nofollow: [...nofollow]
+            nofollow: [...nofollow],
+            all: linkElements
         },
         jsonLdBlocks
     };

@@ -21,8 +21,10 @@
  *        { type: "progress", done, total, url, status }
  *        { type: "done", file }            report saved to reports/<file>
  *        { type: "error", message }
- *     Body: { url, mode: "site"|"page", maxUrls?, concurrency?,
- *             includeSubdomains?, checkLinks?, checkExternalLinks?, checkImages? }
+ *     Body: { url, mode: "site"|"page", maxUrls?, concurrency?, crawl?,
+ *             includeSubdomains?, checkLinks?, checkExternalLinks?, checkImages?,
+ *             userAgent?, siteHeader?: { name, value } }
+ *     siteHeader is sent only to the audited site's own hosts (a WAF allowlist token).
  *     Closing the request cancels the audit.
  *
  * Exposed as a connect-style middleware (req, res, next) so the Vite dev
@@ -69,6 +71,9 @@ function readJsonBody(req) {
     });
 }
 
+// Headers the HTTP client sets itself; a custom header may not override them.
+const RESERVED_HEADERS = new Set(["host", "user-agent", "accept", "accept-encoding", "connection", "content-length", "transfer-encoding"]);
+
 /** Validate and normalize the audit request body. Throws with a user-facing message. */
 function parseAuditRequest(body) {
     let url;
@@ -90,6 +95,23 @@ function parseAuditRequest(body) {
     if (body.checkLinks === false) options.checkLinks = false;
     if (body.checkExternalLinks === false) options.checkExternalLinks = false;
     if (body.checkImages === false) options.checkImages = false;
+    if (body.crawl === true && mode === "site") options.crawl = true;
+
+    // Printable ASCII only: header values cannot carry line breaks.
+    const printable = /^[\x20-\x7E]+$/;
+    const userAgent = String(body.userAgent ?? "").trim();
+    if (userAgent) {
+        if (!printable.test(userAgent) || userAgent.length > 300) throw new Error("The User-Agent may only contain plain text, up to 300 characters");
+        options.userAgent = userAgent;
+    }
+    const headerName = String(body.siteHeader?.name ?? "").trim();
+    const headerValue = String(body.siteHeader?.value ?? "").trim();
+    if (headerName || headerValue) {
+        if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,64}$/.test(headerName)) throw new Error("The header name may only contain letters, digits and dashes");
+        if (RESERVED_HEADERS.has(headerName.toLowerCase())) throw new Error(`The ${headerName} header is set by the auditor and cannot be replaced`);
+        if (!headerValue || !printable.test(headerValue) || headerValue.length > 1000) throw new Error("The header value may only contain plain text, up to 1000 characters");
+        options.siteHeaders = { headers: { [headerName]: headerValue } };
+    }
     return { url: url.href, mode, options };
 }
 

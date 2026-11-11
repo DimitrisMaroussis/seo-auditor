@@ -274,3 +274,101 @@ test("maxUrls limits the audit and reports what was skipped", async () => {
     assert.equal(report.pages.length, 3);
     assert.equal(report.sitemap.skippedByLimit, 11);
 });
+
+test("crawl: finds pages missing from the sitemap, orphan pages, click depth and robots.txt conflicts", async () => {
+    const link = (...paths) => paths.map(p => `<a href="${p}">${p}</a>`).join("");
+    const crawlSite = await startServer({
+        "/robots.txt": (req, res, api) => {
+            res.writeHead(200, { "Content-Type": "text/plain" });
+            res.end(`User-agent: *\nDisallow: /private\nSitemap: ${api.url("/sitemap.xml")}\n`);
+        },
+        "/sitemap.xml": (req, res, api) => {
+            res.writeHead(200, XML);
+            res.end(`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+                ${["/", "/a", "/orphan", "/private/listed"].map(p => `<url><loc>${api.url(p)}</loc></url>`).join("")}
+            </urlset>`);
+        },
+        "/": { body: page({ title: "Home", description: "h", canonical: "/", body: link("/a", "/b", "/private/x", "/file.pdf", "/gone") }) },
+        "/a": { body: page({ title: "A", description: "a", canonical: "/a", body: link("/", "/b") }) },
+        "/b": { body: page({ title: "B", description: "b", canonical: "/b", body: link("/c") }) },
+        "/c": { body: page({ title: "C", description: "c", canonical: "/c", body: link("/d") }) },
+        "/d": { body: page({ title: "D", description: "d", canonical: "/d", body: link("/e") }) },
+        "/e": { body: page({ title: "E", description: "e", canonical: "/e" }) },
+        "/orphan": { body: page({ title: "Orphan", description: "o", canonical: "/orphan" }) },
+        "/private/listed": { body: page({ title: "Listed", description: "l", canonical: "/private/listed" }) },
+        "/file.pdf": { headers: { "Content-Type": "application/pdf" }, body: "%PDF" }
+    });
+    try {
+        const report = await runAudit(crawlSite.url("/"), { ...FAST, crawl: true, checkExternalLinks: false, checkImages: false });
+        const byPath = (p) => report.pages.find(pg => pg.requestedUrl === crawlSite.url(p));
+        const codes = (p) => byPath(p).issues.map(i => i.code);
+
+        assert.deepEqual(report.pages.map(p => new URL(p.requestedUrl).pathname).sort(),
+            ["/", "/a", "/b", "/c", "/d", "/e", "/orphan", "/private/listed"], "the PDF and the 404 are not pages");
+
+        assert.equal(byPath("/").crawlDepth, 0);
+        assert.equal(byPath("/b").crawlDepth, 1);
+        assert.equal(byPath("/e").crawlDepth, 4);
+        assert.equal(byPath("/orphan").crawlDepth, null);
+        assert.equal(byPath("/b").inlinks, 2);
+        assert.equal(byPath("/a").inlinks, 1);
+
+        assert.ok(codes("/orphan").includes("ORPHAN_PAGE"));
+        assert.ok(codes("/b").includes("NOT_IN_SITEMAP"));
+        assert.ok(!codes("/a").includes("NOT_IN_SITEMAP"));
+        assert.ok(codes("/e").includes("DEEP_PAGE"));
+        assert.ok(!codes("/d").includes("DEEP_PAGE"));
+        assert.ok(codes("/private/listed").includes("SITEMAP_ROBOTS_BLOCKED"));
+
+        const crawl = report.site.crawl;
+        assert.equal(crawl.complete, true);
+        assert.deepEqual(crawl.orphans, [crawlSite.url("/orphan"), crawlSite.url("/private/listed")]);
+        assert.deepEqual(crawl.robotsBlocked, [{ url: crawlSite.url("/private/x"), sources: [crawlSite.url("/")] }]);
+        assert.deepEqual(report.site.sitemapRobotsBlocked, [crawlSite.url("/private/listed")]);
+        assert.ok(report.site.brokenInternalLinks.some(l => l.url === crawlSite.url("/gone")), "a crawled 404 is still a broken link");
+
+        // Without the link check nothing requests the disallowed URL: the crawl does not follow it.
+        crawlSite.hits.clear();
+        await runAudit(crawlSite.url("/"), { ...FAST, crawl: true, checkLinks: false, checkExternalLinks: false, checkImages: false });
+        assert.equal(crawlSite.hits.get("/private/x"), undefined);
+
+        // A page limit that stops the crawl leaves orphan detection off.
+        const limited = await runAudit(crawlSite.url("/"), { ...FAST, crawl: true, maxUrls: 3, checkLinks: false, checkExternalLinks: false, checkImages: false });
+        assert.equal(limited.pages.length, 3);
+        assert.equal(limited.site.crawl.complete, false);
+        assert.deepEqual(limited.site.crawl.orphans, []);
+    } finally {
+        await crawlSite.close();
+    }
+});
+
+test("an allowlist header is sent to the audited site only, never to other hosts", async () => {
+    const seen = [];
+    const record = (name) => (req, res) => {
+        seen.push([name, req.headers["x-audit-token"] ?? null]);
+        res.writeHead(200, { "Content-Type": "text/html" });
+        res.end(page({ title: name, description: name, canonical: "/" }));
+    };
+    const other = await startServer({ "/": record("other") });
+    // Same machine, different host name: "localhost" is another site to the auditor.
+    const otherUrl = other.url("/").replace("127.0.0.1", "localhost");
+    const own = await startServer({
+        "/robots.txt": { status: 404 },
+        "/": (req, res) => {
+            seen.push(["own", req.headers["x-audit-token"] ?? null]);
+            res.writeHead(200, { "Content-Type": "text/html" });
+            res.end(page({ title: "Own", description: "o", canonical: "/", body: `<a href="${otherUrl}">Partner</a><a href="/away">Away</a>` }));
+        },
+        // A redirect to another site must not carry the token there.
+        "/away": { status: 302, headers: { Location: otherUrl } }
+    });
+    try {
+        await runAudit(own.url("/"), { ...FAST, siteHeaders: { headers: { "X-Audit-Token": "s3cret" } } });
+        assert.ok(seen.some(([host, token]) => host === "own" && token === "s3cret"));
+        assert.ok(seen.some(([host]) => host === "other"), "the external link was checked");
+        assert.ok(seen.filter(([host]) => host === "other").every(([, token]) => token === null));
+    } finally {
+        await own.close();
+        await other.close();
+    }
+});
