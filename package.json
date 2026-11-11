@@ -1,7 +1,7 @@
 {
   "name": "magenta-seo-auditor",
   "productName": "SEO Auditor",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Sitemap-driven technical SEO auditor",
   "author": "Dimitris Maroussis",
   "main": "desktop/main.js",

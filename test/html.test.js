@@ -195,3 +195,13 @@ test("link and image elements are recorded as written, one per element", () => {
     assert.equal(seo.links.all[0].url, "https://www.example.gr/a");
     assert.deepEqual(seo.images.all.map(i => i.html), [`<img src="/i.png" alt="Logo" loading="lazy">`, `<img src="/j.png">`]);
 });
+
+test("image elements keep long attributes whole; embedded data: files are shortened", () => {
+    const srcset = Array.from({ length: 8 }, (_, i) => `https://cdn.example.gr/wp-content/uploads/2024/01/photo-${(i + 1) * 150}w.webp ${(i + 1) * 150}w`).join(", ");
+    const placeholder = "data:image/svg+xml;base64," + "A".repeat(500);
+    const seo = extractSeo(doc("", `<img src="/p.webp" srcset="${srcset}" alt="Photo"><img src="${placeholder}" data-src="/lazy.webp" alt="">`), PAGE, opts);
+    assert.ok(srcset.length > 300);
+    assert.equal(seo.images.all[0].html, `<img src="/p.webp" srcset="${srcset}" alt="Photo">`);
+    assert.ok(seo.images.all[1].html.length < 200);
+    assert.match(seo.images.all[1].html, /src="data:image\/svg\+xml;base64,A+…" data-src="\/lazy.webp"/);
+});

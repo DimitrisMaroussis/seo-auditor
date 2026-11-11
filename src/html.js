@@ -108,11 +108,14 @@ function extractSeo(html, pageUrl, { rootUrl = pageUrl, subdomainPolicy = "exact
     const h1s = $("h1").map((_, el) => collapse($(el).text())).get();
 
     // Markup of an element as written, for showing it in the report: the start tag with
-    // its attributes and, for links, the visible text. Long values are shortened.
+    // its attributes and, for links, the visible text. Long values are shortened, except
+    // with `full` (images keep every srcset candidate); embedded data: files always are.
     const clip = (text, max) => text.length > max ? text.slice(0, max - 1) + "…" : text;
-    const startTag = (el) => {
-        const attrs = Object.entries(el.attribs || {})
-            .map(([name, value]) => ` ${name}="${clip(value, 300).replace(/"/g, "&quot;")}"`);
+    const startTag = (el, { full = false } = {}) => {
+        const attrs = Object.entries(el.attribs || {}).map(([name, value]) => {
+            const shown = /^\s*data:/i.test(value) ? clip(value, 80) : full ? value : clip(value, 300);
+            return ` ${name}="${shown.replace(/"/g, "&quot;")}"`;
+        });
         return `<${el.name}${attrs.join("")}>`;
     };
 
@@ -134,7 +137,7 @@ function extractSeo(html, pageUrl, { rootUrl = pageUrl, subdomainPolicy = "exact
             src: $(el).attr("src") || $(el).attr("data-src") || null,
             alt: alt === undefined ? null : alt,
             altStatus: alt === undefined ? "missing" : (alt.trim() === "" ? "empty" : "present"),
-            html: startTag(el)
+            html: startTag(el, { full: true })
         });
         addImage($(el).attr("src"));
         addImage($(el).attr("data-src"));
